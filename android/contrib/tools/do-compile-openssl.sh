@@ -35,8 +35,8 @@ fi
 
 
 FF_BUILD_ROOT=`pwd`
-FF_ANDROID_PLATFORM=android-9
-
+FF_ANDROID_PLATFORM=android-16
+FF_ANDROID_API=16
 
 FF_BUILD_NAME=
 FF_SOURCE=
@@ -94,6 +94,7 @@ elif [ "$FF_ARCH" = "x86" ]; then
 
 elif [ "$FF_ARCH" = "x86_64" ]; then
     FF_ANDROID_PLATFORM=android-21
+    FF_ANDROID_API=21
 
     FF_BUILD_NAME=openssl-x86_64
     FF_SOURCE=$FF_BUILD_ROOT/$FF_BUILD_NAME
@@ -105,6 +106,7 @@ elif [ "$FF_ARCH" = "x86_64" ]; then
 
 elif [ "$FF_ARCH" = "arm64" ]; then
     FF_ANDROID_PLATFORM=android-21
+    FF_ANDROID_API=21
 
     FF_BUILD_NAME=openssl-arm64
     FF_SOURCE=$FF_BUILD_ROOT/$FF_BUILD_NAME
@@ -178,9 +180,10 @@ cd $FF_SOURCE
 #    echo 'reuse configure'
 #else
     echo "./Configure $FF_CFG_FLAGS"
-    ./Configure $FF_CFG_FLAGS
-#        --extra-cflags="$FF_CFLAGS $FF_EXTRA_CFLAGS" \
-#        --extra-ldflags="$FF_EXTRA_LDFLAGS"
+    ./Configure $FF_CFG_FLAGS \
+	-D__ANDROID_API__="$FF_ANDROID_API"
+        #--extra-cflags="$FF_CFLAGS $FF_EXTRA_CFLAGS" \
+        #--extra-ldflags="$FF_EXTRA_LDFLAGS"
 #fi
 
 #--------------------

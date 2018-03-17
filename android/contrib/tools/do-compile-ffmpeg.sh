@@ -40,7 +40,8 @@ fi
 
 
 FF_BUILD_ROOT=`pwd`
-FF_ANDROID_PLATFORM=android-9
+FF_ANDROID_PLATFORM=android-16
+FF_ANDROID_API=16
 
 
 FF_BUILD_NAME=
@@ -127,6 +128,7 @@ elif [ "$FF_ARCH" = "x86" ]; then
 
 elif [ "$FF_ARCH" = "x86_64" ]; then
     FF_ANDROID_PLATFORM=android-21
+    FF_ANDROID_API=21
 
     FF_BUILD_NAME=ffmpeg-x86_64
     FF_BUILD_NAME_OPENSSL=openssl-x86_64
@@ -145,6 +147,7 @@ elif [ "$FF_ARCH" = "x86_64" ]; then
 
 elif [ "$FF_ARCH" = "arm64" ]; then
     FF_ANDROID_PLATFORM=android-21
+    FF_ANDROID_API=21
 
     FF_BUILD_NAME=ffmpeg-arm64
     FF_BUILD_NAME_OPENSSL=openssl-arm64
@@ -271,6 +274,8 @@ FF_CFG_FLAGS="$FF_CFG_FLAGS --target-os=linux"
 FF_CFG_FLAGS="$FF_CFG_FLAGS --enable-pic"
 # FF_CFG_FLAGS="$FF_CFG_FLAGS --disable-symver"
 
+#FF_CFG_FLAGS="$FF_CFG_FLAGS --disable-linux-perf"
+
 if [ "$FF_ARCH" = "x86" ]; then
     FF_CFG_FLAGS="$FF_CFG_FLAGS --disable-asm"
 else
@@ -303,6 +308,7 @@ if [ -f "./config.h" ]; then
 else
     which $CC
     ./configure $FF_CFG_FLAGS \
+        --extra-cflags="-D__ANDROID_API__=$FF_ANDROID_API" \
         --extra-cflags="$FF_CFLAGS $FF_EXTRA_CFLAGS" \
         --extra-ldflags="$FF_DEP_LIBS $FF_EXTRA_LDFLAGS"
     make clean

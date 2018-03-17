@@ -2886,7 +2886,7 @@ static int read_thread(void *arg)
             /* wait 10 ms to avoid trying to get another packet */
             /* XXX: horrible */
             SDL_Delay(10);
-            continue;
+            //continue;
         }
 #endif
         if (is->seek_req) {
@@ -3611,6 +3611,21 @@ void ffp_set_option(FFPlayer *ffp, int opt_category, const char *name, const cha
 
     AVDictionary **dict = ffp_get_opt_dict(ffp, opt_category);
     av_dict_set(dict, name, value, 0);
+
+#if  CONFIG_AVFILTER
+    if  (opt_category == FFP_OPT_CATEGORY_PLAYER && strcmp(name, "af") == 0) {
+        //NULL value is not set to  ffp->afilters.. why?
+        bool valueSet = ffp->afilters == NULL && value != NULL;
+        bool valueUnset = ffp->afilters != NULL && value == NULL;
+        bool valueChanged = ffp->afilters != NULL && value != NULL && strcmp(ffp->afilters, value) != 0;
+
+        if (valueSet || valueUnset || valueChanged) {
+            ffp->af_changed = 1;
+        }
+    }
+#endif
+av_opt_set_dict(ffp, dict);
+
 }
 
 void ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64_t value)

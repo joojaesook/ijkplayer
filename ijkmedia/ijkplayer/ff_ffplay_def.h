@@ -28,6 +28,9 @@
  * simple media player based on the FFmpeg libraries
  */
 
+#define FFP_SHOW_DEMUX_CACHE 1
+#define FFP_SHOW_BUF_POS 1
+
 #include "config.h"
 #include <inttypes.h>
 #include <math.h>

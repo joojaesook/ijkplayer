@@ -23,9 +23,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    flavorDimensions "cpu_type"
+
     productFlavors {
-        all32 { minSdkVersion 9 }
-        all64 { minSdkVersion 21 }
+        all32 {
+            dimension "cpu_type"
+            minSdkVersion 16
+        }
+        all64 {
+            dimension "cpu_type"
+            minSdkVersion 21
+        }
         // armv5 {}
         // armv7a {}
         // arm64 { minSdkVersion 21 }
