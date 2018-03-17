@@ -2590,6 +2590,8 @@ static int decode_interrupt_cb(void *ctx)
 }
 
 static int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue, int min_frames) {
+    av_log(NULL, AV_LOG_WARNING, "stream_id = %d, min_frames = %d, queue->nb_packets = %d", stream_id, min_frames, queue->nb_packets);
+
     return stream_id < 0 ||
            queue->abort_request ||
            (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
@@ -2973,6 +2975,17 @@ static int read_thread(void *arg)
             is->queue_attachments_req = 0;
         }
 
+        int audio_enough = stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq, MIN_FRAMES);
+        int video_enough = stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq, MIN_FRAMES);
+        int subtitle_enough = stream_has_enough_packets(is->subtitle_st, is->subtitle_stream, &is->subtitleq, MIN_FRAMES);
+
+#ifdef FFP_SHOW_BUF_POS
+        av_log(NULL, AV_LOG_WARNING, "queue size: max = %d, audio = %d, video = %d, subtitle = %d",
+               ffp->dcc.max_buffer_size, is->audioq.size, is->videoq.size, is->subtitleq.size);
+        av_log(NULL, AV_LOG_WARNING, "enough audio = %d, video = %d, subtitle = %d", audio_enough, video_enough, subtitle_enough);
+
+#endif
+
         /* if the queue are full, no need to read more */
         if (ffp->infinite_buffer<1 && !is->seek_req &&
 #ifdef FFP_MERGE
@@ -2980,9 +2993,7 @@ static int read_thread(void *arg)
 #else
               (is->audioq.size + is->videoq.size + is->subtitleq.size > ffp->dcc.max_buffer_size
 #endif
-            || (   stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq, MIN_FRAMES)
-                && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq, MIN_FRAMES)
-                && stream_has_enough_packets(is->subtitle_st, is->subtitle_stream, &is->subtitleq, MIN_FRAMES)))) {
+            || (audio_enough && video_enough && subtitle_enough))) {
             if (!is->eof) {
                 ffp_toggle_buffering(ffp, 0);
             }

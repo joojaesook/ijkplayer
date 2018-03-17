@@ -9,6 +9,7 @@ extra
 .DS_Store
 ijkmedia/ijkyuv/
 ijkprof/android-ndk-profiler/
+android/ijkplayer/ijkplayer-java/.externalNativeBuild/
 
 # built application files
 *.apk

@@ -30,6 +30,8 @@
 
 #define FFP_SHOW_DEMUX_CACHE 1
 #define FFP_SHOW_BUF_POS 1
+//#define FFP_SHOW_DEMUX_CACHE 1
+//#define FFP_SHOW_BUF_POS 1
 
 #include "config.h"
 #include <inttypes.h>
@@ -88,7 +90,7 @@
 #define MIN_FRAMES 25
 #endif
 #define DEFAULT_MIN_FRAMES  50000
-#define MIN_MIN_FRAMES      5
+#define MIN_MIN_FRAMES      20
 #define MAX_MIN_FRAMES      50000
 #define MIN_FRAMES (ffp->dcc.min_frames)
 #define EXTERNAL_CLOCK_MIN_FRAMES 2
