@@ -71,7 +71,7 @@
 #include "ff_ffpipenode.h"
 #include "ijkmeta.h"
 
-#define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
+#define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (2 * 256 * 1024)
 
 /*
  * START: buffering after prepared/seeked
@@ -81,6 +81,10 @@
 #define DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS     (100)
 #define DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS      (1 * 1000)
 #define DEFAULT_LAST_HIGH_WATER_MARK_IN_MS      (5 * 1000)
+
+#define DEFAULT_PRELOAD_BUFFER_DURATION_IN_MS   (5 * 1000)
+#define MIN_PRELOAD_BUFFER_DURATION_IN_MS       (1 * 1000)
+#define MAX_PRELOAD_BUFFER_DURATION_IN_MS       (30 * 1000)
 
 #define BUFFERING_CHECK_PER_BYTES               (512)
 #define BUFFERING_CHECK_PER_MILLISECONDS        (500)
@@ -149,6 +153,7 @@ typedef struct MyAVPacketList {
     int serial;
 } MyAVPacketList;
 
+typedef struct FFPlayer *ffp; //radicast
 typedef struct PacketQueue {
     MyAVPacketList *first_pkt, *last_pkt;
     int nb_packets;
@@ -163,6 +168,11 @@ typedef struct PacketQueue {
     int alloc_count;
 
     int is_buffer_indicator;
+    // { radicast
+    struct FFPlayer *ffp;
+    AVRational time_base;
+    int checked_preload_buffer_duration;
+    // radicast } 
 } PacketQueue;
 
 // #define VIDEO_PICTURE_QUEUE_SIZE 3
@@ -508,6 +518,7 @@ typedef struct FFDemuxCacheControl
     int next_high_water_mark_in_ms;
     int last_high_water_mark_in_ms;
     int current_high_water_mark_in_ms;
+    int preload_buffer_duration_in_ms; // radicast
 } FFDemuxCacheControl;
 
 inline static void ffp_reset_demux_cache_control(FFDemuxCacheControl *dcc)
@@ -520,6 +531,7 @@ inline static void ffp_reset_demux_cache_control(FFDemuxCacheControl *dcc)
     dcc->next_high_water_mark_in_ms     = DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS;
     dcc->last_high_water_mark_in_ms     = DEFAULT_LAST_HIGH_WATER_MARK_IN_MS;
     dcc->current_high_water_mark_in_ms  = DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS;
+    dcc->preload_buffer_duration_in_ms  = DEFAULT_PRELOAD_BUFFER_DURATION_IN_MS; //radicast
 }
 
 /* ffplayer */

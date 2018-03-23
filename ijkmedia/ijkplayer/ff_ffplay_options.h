@@ -135,7 +135,13 @@ static const AVOption ffp_context_options[] = {
         OPTION_INT(DEFAULT_LAST_HIGH_WATER_MARK_IN_MS,
                    DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,
                    DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) },
-
+    // { radicast
+    { "preload-buffer-duration-ms",            "preload buffer duration in ms before start",
+        OPTION_OFFSET(dcc.preload_buffer_duration_in_ms),
+        OPTION_INT(DEFAULT_PRELOAD_BUFFER_DURATION_IN_MS,
+                   MIN_PRELOAD_BUFFER_DURATION_IN_MS,
+                   MAX_PRELOAD_BUFFER_DURATION_IN_MS) },
+    // radicast }
     { "packet-buffering",                   "pause output until enough packets have been read after stalling",
         OPTION_OFFSET(packet_buffering),    OPTION_INT(1, 0, 1) },
     { "sync-av-start",                      "synchronise a/v start time",

@@ -176,8 +176,33 @@ static int packet_queue_put_private(PacketQueue *q, AVPacket *pkt)
 
     q->duration += FFMAX(pkt1->pkt.duration, MIN_PKT_DURATION);
 
-    /* XXX: should duplicate packet data in DV case */
-    SDL_CondSignal(q->cond);
+// { radicast
+#if FFP_SHOW_DEMUX_CACHE
+    av_log(q->ffp, AV_LOG_DEBUG, "q->duration = %f, pkt1->pkt.duration=%f, size=%d",
+           (av_q2d(q->time_base) * q->duration),
+           (av_q2d(q->time_base) * pkt1->pkt.duration), pkt1->pkt.size);
+#endif
+
+    long duration_in_ms = 0;
+    if (q->time_base.num > 0 && q->time_base.den > 0) {
+        duration_in_ms = av_q2d(q->time_base) * q->duration * 1000;
+    }
+    av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms = %ld", duration_in_ms);
+
+    if (q->checked_preload_buffer_duration) {
+        /* XXX: should duplicate packet data in DV case */
+        SDL_CondSignal(q->cond);
+        av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms signal cond 1");
+        return 0;
+    }
+
+    if (q->ffp->dcc.preload_buffer_duration_in_ms < duration_in_ms) {
+        q->checked_preload_buffer_duration = 1;
+        SDL_CondSignal(q->cond);
+        av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms signal cond 2");
+    }
+// radicast }
+
     return 0;
 }
 
@@ -206,9 +231,13 @@ static int packet_queue_put_nullpacket(PacketQueue *q, int stream_index)
 }
 
 /* packet queue handling */
-static int packet_queue_init(PacketQueue *q)
+static int packet_queue_init(FFPlayer *ffp, PacketQueue *q) //radicast
 {
     memset(q, 0, sizeof(PacketQueue));
+    // { radicast
+    q->ffp = ffp;
+    q->checked_preload_buffer_duration = 0;
+    // radicast }
     q->mutex = SDL_CreateMutex();
     if (!q->mutex) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
@@ -261,6 +290,8 @@ static void packet_queue_destroy(PacketQueue *q)
 
     SDL_DestroyMutex(q->mutex);
     SDL_DestroyCond(q->cond);
+
+    q->ffp = NULL; // radicast
 }
 
 static void packet_queue_abort(PacketQueue *q)
@@ -289,6 +320,12 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
     int ret;
 
     SDL_LockMutex(q->mutex);
+
+    // { radicast
+    if (!q->checked_preload_buffer_duration) {
+        SDL_CondWait(q->cond, q->mutex);
+    }
+    // radicast }
 
     for (;;) {
         if (q->abort_request) {
@@ -2766,6 +2803,11 @@ static int read_thread(void *arg)
                 if (first_h264_stream < 0)
                     first_h264_stream = i;
             }
+        // { radicast
+            is->videoq.time_base = st->time_base;
+        } else if (type == AVMEDIA_TYPE_AUDIO) {
+           is->audioq.time_base = st->time_base;
+        // radicast }
         }
     }
     if (video_stream_count > 1 && st_index[AVMEDIA_TYPE_VIDEO] < 0) {
@@ -3177,9 +3219,9 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
     if (frame_queue_init(&is->sampq, &is->audioq, SAMPLE_QUEUE_SIZE, 1) < 0)
         goto fail;
 
-    if (packet_queue_init(&is->videoq) < 0 ||
-        packet_queue_init(&is->audioq) < 0 ||
-        packet_queue_init(&is->subtitleq) < 0)
+    if (packet_queue_init(ffp, &is->videoq) < 0 || // radicast
+        packet_queue_init(ffp, &is->audioq) < 0 ||
+        packet_queue_init(ffp, &is->subtitleq) < 0)
         goto fail;
 
     if (!(is->continue_read_thread = SDL_CreateCond())) {
@@ -3960,7 +4002,7 @@ int ffp_get_loop(FFPlayer *ffp)
 
 int ffp_packet_queue_init(PacketQueue *q)
 {
-    return packet_queue_init(q);
+    return packet_queue_init(NULL, q); //radicast
 }
 
 void ffp_packet_queue_destroy(PacketQueue *q)
@@ -4091,6 +4133,8 @@ void ffp_statistic_l(FFPlayer *ffp)
 
 void ffp_check_buffering_l(FFPlayer *ffp)
 {
+    av_log(ffp, AV_LOG_DEBUG, "===> ffp_check_buffering_l()");
+
     VideoState *is            = ffp->is;
     int hwm_in_ms             = ffp->dcc.current_high_water_mark_in_ms; // use fast water mark for first loading
     int buf_size_percent      = -1;
