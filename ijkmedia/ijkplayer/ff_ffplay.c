@@ -187,19 +187,19 @@ static int packet_queue_put_private(PacketQueue *q, AVPacket *pkt)
     if (q->time_base.num > 0 && q->time_base.den > 0) {
         duration_in_ms = av_q2d(q->time_base) * q->duration * 1000;
     }
-    av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms = %ld", duration_in_ms);
+    //av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms = %ld", duration_in_ms);
 
     if (q->checked_preload_buffer_duration) {
         /* XXX: should duplicate packet data in DV case */
         SDL_CondSignal(q->cond);
-        av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms signal cond 1");
+        //av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms signal cond 1");
         return 0;
     }
 
     if (q->ffp->dcc.preload_buffer_duration_in_ms < duration_in_ms) {
         q->checked_preload_buffer_duration = 1;
         SDL_CondSignal(q->cond);
-        av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms signal cond 2");
+        //av_log(q->ffp, AV_LOG_DEBUG, "duration_in_ms signal cond 2");
     }
 // radicast }
 
@@ -2627,7 +2627,7 @@ static int decode_interrupt_cb(void *ctx)
 }
 
 static int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue, int min_frames) {
-    av_log(NULL, AV_LOG_WARNING, "stream_id = %d, min_frames = %d, queue->nb_packets = %d", stream_id, min_frames, queue->nb_packets);
+    //av_log(NULL, AV_LOG_WARNING, "stream_id = %d, min_frames = %d, queue->nb_packets = %d", stream_id, min_frames, queue->nb_packets);
 
     return stream_id < 0 ||
            queue->abort_request ||
@@ -3975,6 +3975,21 @@ long ffp_get_duration_l(FFPlayer *ffp)
     return (long)duration;
 }
 
+const char *ffp_get_stream_metadata_l(FFPlayer *ffp, const char *key)
+{
+    assert(ffp);
+    VideoState *is = ffp->is;
+    if (!is || !is->ic || !key)
+        return NULL;
+
+    AVDictionaryEntry *t;
+
+    if ((t = av_dict_get(is->ic->metadata, key, NULL, 0)))
+        return t->value;
+    return NULL;
+}
+
+
 long ffp_get_playable_duration_l(FFPlayer *ffp)
 {
     assert(ffp);
@@ -4133,7 +4148,7 @@ void ffp_statistic_l(FFPlayer *ffp)
 
 void ffp_check_buffering_l(FFPlayer *ffp)
 {
-    av_log(ffp, AV_LOG_DEBUG, "===> ffp_check_buffering_l()");
+    //av_log(ffp, AV_LOG_DEBUG, "===> ffp_check_buffering_l()");
 
     VideoState *is            = ffp->is;
     int hwm_in_ms             = ffp->dcc.current_high_water_mark_in_ms; // use fast water mark for first loading

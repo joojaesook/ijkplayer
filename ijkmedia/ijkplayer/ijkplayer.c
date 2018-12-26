@@ -630,6 +630,21 @@ long ijkmp_get_duration(IjkMediaPlayer *mp)
     return retval;
 }
 
+static const char *ijkmp_get_stream_metadata_l(IjkMediaPlayer *mp, const char *key)
+{
+    return ffp_get_stream_metadata_l(mp->ffplayer, key);
+}
+
+const char *ijkmp_get_stream_metadata(IjkMediaPlayer *mp, const char *key)
+{
+    assert(mp);
+    assert(key);
+    pthread_mutex_lock(&mp->mutex);
+    const char* retval = ijkmp_get_stream_metadata_l(mp, key);
+    pthread_mutex_unlock(&mp->mutex);
+    return retval;
+}
+
 static long ijkmp_get_playable_duration_l(IjkMediaPlayer *mp)
 {
     return ffp_get_playable_duration_l(mp->ffplayer);

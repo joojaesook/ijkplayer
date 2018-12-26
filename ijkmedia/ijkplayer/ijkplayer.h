@@ -206,6 +206,7 @@ int             ijkmp_get_state(IjkMediaPlayer *mp);
 bool            ijkmp_is_playing(IjkMediaPlayer *mp);
 long            ijkmp_get_current_position(IjkMediaPlayer *mp);
 long            ijkmp_get_duration(IjkMediaPlayer *mp);
+const char     *ijkmp_get_stream_metadata(IjkMediaPlayer *mp, const char *key);
 long            ijkmp_get_playable_duration(IjkMediaPlayer *mp);
 void            ijkmp_set_loop(IjkMediaPlayer *mp, int loop);
 int             ijkmp_get_loop(IjkMediaPlayer *mp);

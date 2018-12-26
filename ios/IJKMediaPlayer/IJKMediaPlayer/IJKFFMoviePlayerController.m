@@ -349,6 +349,21 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     return _isVideoToolboxOpen;
 }
 
+- (NSString*)getStreamMetadata:(NSString*)key
+{
+    if (!_mediaPlayer)
+        return NULL;
+
+    const char* ret = NULL;
+    ret = ijkmp_get_stream_metadata(_mediaPlayer, key.UTF8String);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    return [NSString stringWithUTF8String:ret];
+}
+
+
 inline static int getPlayerOption(IJKFFOptionCategory category)
 {
     int mp_category = -1;
