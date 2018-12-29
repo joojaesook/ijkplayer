@@ -1069,6 +1069,31 @@ IjkMediaPlayer_native_setLogLevel(JNIEnv *env, jclass clazz, jint level)
 }
 
 
+static jstring
+IjkMediaPlayer_native_getStreamMetadata(JNIEnv *env, jobject thiz, jobject name)
+{
+    MPTRACE("%s\n", __func__);
+    IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
+    const char *c_name = NULL;
+    JNI_CHECK_GOTO(mp, env, "java/lang/IllegalStateException", "mpjni: getStreamMetadata: null mp", LABEL_RETURN);
+
+    c_name = (*env)->GetStringUTFChars(env, name, NULL );
+    JNI_CHECK_GOTO(c_name, env, "java/lang/OutOfMemoryError", "mpjni: getStreamMetadata: name.string oom", LABEL_RETURN);
+
+    //ijkmp_set_option_int(mp, category, c_name, value);
+    const char *ret_value = ijkmp_get_stream_metadata(mp, c_name);
+
+    if (!ret_value)
+        return NULL;
+
+    return (*env)->NewStringUTF(env, ret_value);
+
+    LABEL_RETURN:
+    if (c_name)
+        (*env)->ReleaseStringUTFChars(env, name, c_name);
+    ijkmp_dec_ref_p(&mp);
+    return NULL;
+}
 
 
 // ----------------------------------------------------------------------------
@@ -1119,6 +1144,7 @@ static JNINativeMethod g_methods[] = {
     { "native_profileEnd",      "()V",                      (void *) IjkMediaPlayer_native_profileEnd },
 
     { "native_setLogLevel",     "(I)V",                     (void *) IjkMediaPlayer_native_setLogLevel },
+    { "native_getStreamMetadata", "(Ljava/lang/String;)Ljava/lang/String;", (void *) IjkMediaPlayer_native_getStreamMetadata },
 };
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
