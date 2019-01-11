@@ -1086,7 +1086,33 @@ IjkMediaPlayer_native_getStreamMetadata(JNIEnv *env, jobject thiz, jobject name)
     if (!ret_value)
         return NULL;
 
-    return (*env)->NewStringUTF(env, ret_value);
+    jbyteArray bytes = 0;
+    int len;
+    len = strlen(ret_value);
+    bytes = (*env)->NewByteArray(env, len);
+
+    if ((*env)->EnsureLocalCapacity(env, 2) < 0) {
+        return NULL; /* out of memory error */
+    }
+
+    jstring result = NULL;
+    jstring euc_kr_str = (*env)->NewStringUTF(env, "euc-kr");
+
+
+    jclass string_class;
+    string_class = (*env)->FindClass(env, "java/lang/String");
+    (*env)->SetByteArrayRegion(env, bytes, 0, len, (jbyte *) ret_value);
+
+    jmethodID stringConstructor = (*env)->GetMethodID(env, string_class, "<init>",
+                                                      "([BLjava/lang/String;)V");
+
+    if (stringConstructor != NULL) {
+        result = (*env)->NewObject(env, string_class, stringConstructor, bytes, euc_kr_str);
+    }
+
+    (*env)->DeleteLocalRef(env, euc_kr_str);
+    (*env)->DeleteLocalRef(env, bytes);
+    return result;
 
     LABEL_RETURN:
     if (c_name)
